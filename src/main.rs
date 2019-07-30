@@ -13,7 +13,9 @@ fn main() {
     println!("{}", world);
 
     let p1 = Point::new(2, 0);
-    let p2 = Point::new(3, 0);
+    let p2 = Point::new(5, 1);
+
+    //    println!("{}", Grid::calc_heuristic(p1, p2));
 
     let neighbours = world.get_adjacent(p1);
 

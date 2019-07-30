@@ -33,7 +33,7 @@ pub struct Grid {
 ///
 /// https://stackoverflow.com/questions/39949939/how-can-i-implement-a-min-heap-of-f64-with-rusts
 /// -binaryheap
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 struct State {
     f: f64,
     g: f64,
@@ -85,7 +85,7 @@ impl Grid {
 
         while let Some(State { f, g, position }) = heap.pop() {
             if position == goal {
-                println!("Bingo!!!");
+                println!("Bingo!!! {:?}", position);
                 return Ok(vec![]);
             }
 
@@ -96,19 +96,22 @@ impl Grid {
                     continue;
                 }
 
+                let new_g = g + Self::calc_heuristic(position, pos); // distance between
+                                                                     // successor and q
                 let new_state = State {
-                    f: f + 5.0,
-                    g: g + 1.0,
+                    g: new_g,
+                    f: new_g + Self::calc_heuristic(pos, goal), // dist between q and goal
                     position: pos,
                 };
 
+                // TODO: make this proper
                 if heap.iter().all(|&n| n.position != pos) {
                     heap.push(new_state)
                 } else if new_state.f >= g {
                     continue;
                 }
 
-                println!(" --> {:?}", pos)
+                println!(" --> {:?}", new_state)
             }
 
             closed.insert(position);
@@ -145,8 +148,9 @@ impl Grid {
     }
 
     /// Here defines the Heuristic function.
-    fn calc_heuristic(start: Point, end: Point) -> f64 {
-        0.0
+    ///
+    pub fn calc_heuristic(a: Point, b: Point) -> f64 {
+        (((a.x - b.x).pow(2) + (a.y - b.y).pow(2)) as f64).sqrt()
     }
 }
 
