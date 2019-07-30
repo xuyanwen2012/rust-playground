@@ -1,14 +1,17 @@
 use std::cmp::Ordering;
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, HashSet};
 use std::fmt;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+//#[repr(C)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Point {
     x: i32,
     y: i32,
 }
 
 impl Point {
+    /// Construct a new point, using the provided values.
+    #[inline]
     pub fn new(x: i32, y: i32) -> Self {
         Point { x, y }
     }
@@ -33,6 +36,7 @@ pub struct Grid {
 #[derive(Copy, Clone, PartialEq)]
 struct State {
     f: f64,
+    g: f64,
     position: Point,
 }
 
@@ -71,27 +75,53 @@ impl Grid {
     /// A Star path finding from 'start' to 'goal'
     ///
     pub fn shortest_path(&self, start: Point, goal: Point) -> PathFindingResult {
-        let mut closed: Vec<Point> = vec![];
-        let mut heap = BinaryHeap::new();
+        let mut closed = HashSet::new(); // should i use with_capacity?
+        let mut heap = BinaryHeap::new(); // same here
         heap.push(State {
             f: 0.0,
+            g: 0.0,
             position: start,
         });
 
-        while let Some(State { f, position }) = heap.pop() {
+        while let Some(State { f, g, position }) = heap.pop() {
             if position == goal {
                 println!("Bingo!!!");
                 return Ok(vec![]);
             }
+
+            println!("Visiting {:?}...", position);
+
+            for pos in self.get_adjacent(position) {
+                if closed.contains(&position) {
+                    continue;
+                }
+
+                let new_state = State {
+                    f: f + 5.0,
+                    g: g + 1.0,
+                    position: pos,
+                };
+
+                if heap.iter().all(|&n| n.position != pos) {
+                    heap.push(new_state)
+                } else if new_state.f >= g {
+                    continue;
+                }
+
+                println!(" --> {:?}", pos)
+            }
+
+            closed.insert(position);
         }
 
         Err(String::from("Could not find a path!!!"))
     }
 
+    /// Get a list of neighbors at position 'pos'
+    ///
     pub fn get_adjacent(&self, pos: Point) -> Vec<Point> {
         let Point { x, y } = pos;
 
-        //        let adjacent = (-1..2).map(|i| Point { x: x + i, y: 0 }).collect();
         let adjacent = vec![
             Point::new(x - 1, y - 1),
             Point::new(x, y - 1),
@@ -112,6 +142,11 @@ impl Grid {
 
     fn valid_pos(&self, pos: &Point) -> bool {
         !(pos.x < 0 || pos.x >= self.cols || pos.y < 0 || pos.y >= self.rows)
+    }
+
+    /// Here defines the Heuristic function.
+    fn calc_heuristic(start: Point, end: Point) -> f64 {
+        0.0
     }
 }
 
