@@ -3,17 +3,28 @@
 mod algorithms;
 mod data_structs;
 
+use crate::algorithms::a_star::GridCell::Occupied;
 use crate::algorithms::a_star::{Grid, Point};
 use crate::data_structs::*;
 
 mod solution;
+
+fn render_path(world: Grid, path: &[Point]) {
+    let mut new_world = world;
+
+    for &pos in path {
+        new_world.set_cell(pos, Occupied)
+    }
+
+    println!("{}", new_world);
+}
 
 fn main() {
     let world = Grid::new();
     println!("{}", world);
 
     let p1 = Point::new(2, 0);
-    let p2 = Point::new(5, 1);
+    let p2 = Point::new(2, 3);
 
     //    println!("{}", Grid::calc_heuristic(p1, p2));
 
@@ -22,7 +33,7 @@ fn main() {
     let path = world.shortest_path(p1, p2);
 
     match path {
-        Ok(vec) => println!("{:?}", vec),
+        Ok(vec) => render_path(world, &vec),
         Err(e) => println!("{}", e),
     }
 

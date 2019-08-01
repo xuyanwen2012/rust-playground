@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashSet};
+use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::fmt;
 
-//#[repr(C)]
+#[repr(C)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Point {
     x: i32,
@@ -25,9 +25,9 @@ pub enum GridCell {
 
 #[derive(Debug)]
 pub struct Grid {
-    cols: i32,
-    rows: i32,
-    cells: Vec<GridCell>,
+    pub cols: i32,
+    pub rows: i32,
+    pub cells: Vec<GridCell>,
 }
 
 ///
@@ -61,7 +61,7 @@ impl Grid {
         let cols: i32 = 16;
         let rows: i32 = 16;
 
-        let cells = (0..cols * rows).map(|i| GridCell::Empty).collect();
+        let cells = (0..cols * rows).map(|_| GridCell::Empty).collect();
 
         Grid { cols, rows, cells }
     }
@@ -69,7 +69,18 @@ impl Grid {
     /// Get cell at position 'pos' unchecked.
     ///
     pub fn get_cell(&self, pos: Point) -> GridCell {
-        self.cells[(pos.x + self.cols * pos.y) as usize]
+        self.cells[self.get_index(pos)]
+    }
+
+    pub fn set_cell(&mut self, pos: Point, value: GridCell) {
+        let index = (pos.x + self.cols * pos.y) as usize;
+        self.cells[index] = value;
+    }
+
+    /// Calculate the index of 'pos'
+    ///
+    pub fn get_index(&self, pos: Point) -> usize {
+        (pos.x + self.cols * pos.y) as usize
     }
 
     /// A Star path finding from 'start' to 'goal'
@@ -83,41 +94,75 @@ impl Grid {
             position: start,
         });
 
-        while let Some(State { f, g, position }) = heap.pop() {
+        let mut parents = HashMap::new();
+
+        while let Some(State { g, f, position }) = heap.pop() {
+            println!("Visiting {:?}...", position);
+
             if position == goal {
                 println!("Bingo!!! {:?}", position);
-                return Ok(vec![]);
+                println!("{:?}", parents);
+                return Ok(self.final_path(&parents, position, start));
+                //                    return Ok(vec![]);
             }
-
-            println!("Visiting {:?}...", position);
 
             for pos in self.get_adjacent(position) {
                 if closed.contains(&position) {
                     continue;
                 }
 
-                let new_g = g + Self::calc_heuristic(position, pos); // distance between
-                                                                     // successor and q
+                let new_g = g + 1.0; // distance between successor and q
+
+                //                if  { }
+                //                if let Some(n) = heap.iter().find(|&s| s.position == pos) {
+                //                    if new_g < n.g {}
+                //                } else {
+                //
+                //                }
+
                 let new_state = State {
                     g: new_g,
                     f: new_g + Self::calc_heuristic(pos, goal), // dist between q and goal
                     position: pos,
                 };
 
-                // TODO: make this proper
-                if heap.iter().all(|&n| n.position != pos) {
-                    heap.push(new_state)
-                } else if new_state.f >= g {
-                    continue;
+                heap.push(new_state);
+                if !parents.contains_key(&pos) {
+                    parents.insert(pos, position);
                 }
 
-                println!(" --> {:?}", new_state)
+                println!(" --> {:?}", new_state);
             }
 
             closed.insert(position);
         }
 
         Err(String::from("Could not find a path!!!"))
+    }
+
+    fn final_path(
+        &self,
+        parents: &HashMap<Point, Point>,
+        point: Point,
+        start: Point,
+    ) -> Vec<Point> {
+        let mut path = vec![];
+        let mut current = point;
+        //        println!("{:?}", parents);
+
+        while let Some(&parent) = parents.get(&current) {
+            if current == start {
+                break;
+            }
+
+            current = parent;
+            path.push(current);
+            println!("{:?}", current)
+        }
+
+        path.insert(0, point);
+        path.reverse();
+        path
     }
 
     /// Get a list of neighbors at position 'pos'
@@ -143,14 +188,14 @@ impl Grid {
             .collect()
     }
 
-    fn valid_pos(&self, pos: &Point) -> bool {
+    pub fn valid_pos(&self, pos: &Point) -> bool {
         !(pos.x < 0 || pos.x >= self.cols || pos.y < 0 || pos.y >= self.rows)
     }
 
     /// Here defines the Heuristic function.
     ///
     pub fn calc_heuristic(a: Point, b: Point) -> f64 {
-        (((a.x - b.x).pow(2) + (a.y - b.y).pow(2)) as f64).sqrt()
+        ((a.x - b.x).pow(2) + (a.y - b.y).pow(2)) as f64
     }
 }
 
