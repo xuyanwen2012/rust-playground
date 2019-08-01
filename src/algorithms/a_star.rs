@@ -2,6 +2,8 @@ use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::fmt;
 
+use log::trace;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Point {
@@ -96,12 +98,11 @@ impl Grid {
 
         let mut parents = HashMap::new();
 
-        while let Some(State { g, f, position }) = heap.pop() {
-            println!("Visiting {:?}...", position);
+        while let Some(State { g, f: _, position }) = heap.pop() {
+            trace!("Visiting {:?}...", position);
 
             if position == goal {
-                println!("Bingo!!! {:?}", position);
-                println!("{:?}", parents);
+                trace!("Bingo!!! {:?}", position);
                 return Ok(self.final_path(&parents, position, start));
                 //                    return Ok(vec![]);
             }
@@ -131,7 +132,7 @@ impl Grid {
                     parents.insert(pos, position);
                 }
 
-                println!(" --> {:?}", new_state);
+                trace!(" --> {:?}", new_state);
             }
 
             closed.insert(position);
@@ -157,7 +158,7 @@ impl Grid {
 
             current = parent;
             path.push(current);
-            println!("{:?}", current)
+            trace!("{:?}", current)
         }
 
         path.insert(0, point);

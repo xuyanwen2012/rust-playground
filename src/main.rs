@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(unused_imports)]
 
 mod algorithms;
 mod data_structs;
@@ -28,11 +29,7 @@ fn main() {
 
     //    println!("{}", Grid::calc_heuristic(p1, p2));
 
-    let neighbours = world.get_adjacent(p1);
-
-    let path = world.shortest_path(p1, p2);
-
-    match path {
+    match world.shortest_path(p1, p2) {
         Ok(vec) => render_path(world, &vec),
         Err(e) => println!("{}", e),
     }
