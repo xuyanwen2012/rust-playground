@@ -98,13 +98,12 @@ impl Grid {
 
         let mut parents = HashMap::new();
 
-        while let Some(State { g, f: _, position }) = heap.pop() {
+        while let Some(State { g, position, .. }) = heap.pop() {
             trace!("Visiting {:?}...", position);
 
             if position == goal {
                 trace!("Bingo!!! {:?}", position);
                 return Ok(self.final_path(&parents, position, start));
-                //                    return Ok(vec![]);
             }
 
             for pos in self.get_adjacent(position) {
@@ -128,9 +127,7 @@ impl Grid {
                 };
 
                 heap.push(new_state);
-                if !parents.contains_key(&pos) {
-                    parents.insert(pos, position);
-                }
+                parents.entry(pos).or_insert(position);
 
                 trace!(" --> {:?}", new_state);
             }
@@ -141,7 +138,7 @@ impl Grid {
         Err(String::from("Could not find a path!!!"))
     }
 
-    fn final_path(
+    pub fn final_path(
         &self,
         parents: &HashMap<Point, Point>,
         point: Point,
@@ -149,7 +146,6 @@ impl Grid {
     ) -> Vec<Point> {
         let mut path = vec![];
         let mut current = point;
-        //        println!("{:?}", parents);
 
         while let Some(&parent) = parents.get(&current) {
             if current == start {
@@ -184,19 +180,19 @@ impl Grid {
 
         adjacent
             .iter()
-            .filter(|pos| self.valid_pos(pos))
+            .filter(|&&pos| self.valid_pos(pos))
             .cloned()
             .collect()
     }
 
-    pub fn valid_pos(&self, pos: &Point) -> bool {
+    pub fn valid_pos(&self, pos: Point) -> bool {
         !(pos.x < 0 || pos.x >= self.cols || pos.y < 0 || pos.y >= self.rows)
     }
 
     /// Here defines the Heuristic function.
     ///
     pub fn calc_heuristic(a: Point, b: Point) -> f64 {
-        ((a.x - b.x).pow(2) + (a.y - b.y).pow(2)) as f64
+        f64::from((a.x - b.x).pow(2) + (a.y - b.y).pow(2))
     }
 }
 
@@ -211,7 +207,7 @@ impl fmt::Display for Grid {
                 };
                 write!(f, "{}", symbol)?;
             }
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
         Ok(())
     }

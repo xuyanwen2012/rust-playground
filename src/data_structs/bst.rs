@@ -41,12 +41,10 @@ impl<K: PartialOrd + Display, V: Display> BinarySearchTree<K, V> for Node<K, V> 
             } else {
                 self.right = Some(Box::new(Node::new(key, value)))
             }
+        } else if let Some(ref mut left) = self.left {
+            left.insert(key, value);
         } else {
-            if let Some(ref mut left) = self.left {
-                left.insert(key, value);
-            } else {
-                self.left = Some(Box::new(Node::new(key, value)));
-            }
+            self.left = Some(Box::new(Node::new(key, value)));
         }
     }
 }
